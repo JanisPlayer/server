@@ -16,14 +16,14 @@ class NoopScannerTest extends \Test\TestCase {
 	/** @var \OC\Files\Storage\Storage $storage */
 	private $storage;
 
-	/** @var \OC\Files\ObjectStore\NoopScanner $scanner */
+	/** @var \OC\Files\ObjectStore\ObjectStoreScanner $scanner */
 	private $scanner;
 
 	protected function setUp(): void {
 		parent::setUp();
 
 		$this->storage = new \OC\Files\Storage\Temporary([]);
-		$this->scanner = new \OC\Files\ObjectStore\NoopScanner($this->storage);
+		$this->scanner = new \OC\Files\ObjectStore\ObjectStoreScanner($this->storage);
 	}
 
 	public function testFile() {
