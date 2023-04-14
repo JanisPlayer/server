@@ -9,6 +9,7 @@ declare(strict_types=1);
  * @author Joas Schilling <coding@schilljs.com>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
+ * @author Anna Larch <anna.larch@gmx.net>
  *
  * @license AGPL-3.0
  *
@@ -31,7 +32,9 @@ use OCA\DAV\AppInfo\PluginManager;
 use OCA\DAV\CardDAV\Integration\IAddressBookProvider;
 use OCA\DAV\CardDAV\Integration\ExternalAddressBook;
 use OCP\IConfig;
+use OCP\IGroupManager;
 use OCP\IL10N;
+use OCP\IUser;
 use Sabre\CardDAV\Backend;
 use Sabre\DAV\Exception\MethodNotAllowed;
 use Sabre\CardDAV\IAddressBook;
@@ -39,7 +42,6 @@ use function array_map;
 use Sabre\DAV\MkCol;
 
 class UserAddressBooks extends \Sabre\CardDAV\AddressBookHome {
-
 	/** @var IL10N */
 	protected $l10n;
 
@@ -48,12 +50,18 @@ class UserAddressBooks extends \Sabre\CardDAV\AddressBookHome {
 
 	/** @var PluginManager */
 	private $pluginManager;
+	private ?IUser $user;
+	private ?IGroupManager $groupManager;
 
 	public function __construct(Backend\BackendInterface $carddavBackend,
 								string $principalUri,
-								PluginManager $pluginManager) {
+								PluginManager $pluginManager,
+								?IUser $user,
+								?IGroupManager $groupManager) {
 		parent::__construct($carddavBackend, $principalUri);
 		$this->pluginManager = $pluginManager;
+		$this->user = $user;
+		$this->groupManager = $groupManager;
 	}
 
 	/**
@@ -69,11 +77,17 @@ class UserAddressBooks extends \Sabre\CardDAV\AddressBookHome {
 			$this->config = \OC::$server->getConfig();
 		}
 
+		/** @var string|array $principal */
+		$principal = $this->principalUri;
 		$addressBooks = $this->carddavBackend->getAddressBooksForUser($this->principalUri);
+		// add the system address book
+		if (is_string($principal) && $principal !== 'principals/system/system' && $this->carddavBackend instanceof CardDavBackend) {
+			$addressBooks[] = $this->carddavBackend->getAddressBooksByUri('principals/system/system', 'system');
+		}
 		/** @var IAddressBook[] $objects */
 		$objects = array_map(function (array $addressBook) {
 			if ($addressBook['principaluri'] === 'principals/system/system') {
-				return new SystemAddressbook($this->carddavBackend, $addressBook, $this->l10n, $this->config);
+				return new SystemAddressbook($this->carddavBackend, $addressBook, $this->l10n, $this->config, $this->user, $this->groupManager);
 			}
 
 			return new AddressBook($this->carddavBackend, $addressBook, $this->l10n);
