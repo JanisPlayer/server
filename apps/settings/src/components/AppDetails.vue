@@ -236,7 +236,17 @@ export default {
 		opacity: .7;
 	}
 	&__documentation {
-		padding-top: 20px;
+		padding: 10px;
+		border: 1px solid var(--color-border-maxcontrast);
+		margin-top: 20px;
+		background-color: var(--color-background-dark);
+		border-radius: var(--border-radius-large);
+		a.appslink {
+			display: block;
+			&:hover {
+				text-decoration: underline;
+			}
+		}
 	}
 	&__description {
 		padding-top: 20px;
