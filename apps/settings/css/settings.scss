@@ -1465,10 +1465,6 @@ doesnotexist:-o-prefocus, .strengthify-wrapper {
 			}
 
 			&:hover {
-				input:not([type='submit']):not(:focus):not(:active) {
-					border-color: var(--color-border) !important;
-				}
-
 				&:not(#grid-header) {
 					box-shadow: 5px 0 0 var(--color-primary-element) inset;
 				}
@@ -1478,8 +1474,7 @@ doesnotexist:-o-prefocus, .strengthify-wrapper {
 				width: 100%;
 			}
 
-			> div,
-			> .displayName > form,
+			> td,
 			> form {
 				grid-row: 1;
 				display: inline-flex;
