@@ -308,6 +308,7 @@ class JobList implements IJobList {
 					$job = new $class();
 				} else {
 					// job from disabled app or old version of an app, no need to do anything
+					$this->removeById($row['id']);
 					return null;
 				}
 			}
