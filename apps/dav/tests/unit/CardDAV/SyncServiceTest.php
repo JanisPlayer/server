@@ -30,6 +30,7 @@ namespace OCA\DAV\Tests\unit\CardDAV;
 use OCA\DAV\CardDAV\CardDavBackend;
 use OCA\DAV\CardDAV\Converter;
 use OCA\DAV\CardDAV\SyncService;
+use OCP\IDBConnection;
 use OCP\IUser;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
@@ -170,12 +171,13 @@ class SyncServiceTest extends TestCase {
 	 */
 	private function getSyncServiceMock($backend, $response) {
 		$userManager = $this->getMockBuilder(IUserManager::class)->disableOriginalConstructor()->getMock();
+		$dbConnection = $this->createMock(IDBConnection::class);
 		$logger = $this->getMockBuilder(LoggerInterface::class)->disableOriginalConstructor()->getMock();
 		$converter = $this->createMock(Converter::class);
 		/** @var SyncService | \PHPUnit\Framework\MockObject\MockObject $ss */
 		$ss = $this->getMockBuilder(SyncService::class)
 			->setMethods(['ensureSystemAddressBookExists', 'requestSyncReport', 'download', 'getCertPath'])
-			->setConstructorArgs([$backend, $userManager, $logger, $converter])
+			->setConstructorArgs([$backend, $userManager, $dbConnection, $logger, $converter])
 			->getMock();
 		$ss->method('requestSyncReport')->withAnyParameters()->willReturn(['response' => $response, 'token' => 'sync-token-1']);
 		$ss->method('ensureSystemAddressBookExists')->willReturn(['id' => 1]);
