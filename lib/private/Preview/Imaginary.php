@@ -103,7 +103,17 @@ class Imaginary extends ProviderV2 {
 				$mimeType = 'png';
 				break;
 			default:
-				$mimeType = 'jpeg';
+				$preview_format = $this->config->getSystemValueString('preview_format', 'jpeg');
+				switch ($preview_format) {
+					case 'jpeg':
+						$mimeType = 'jpeg';
+					    break;
+					case 'webp':
+						$mimeType = 'webp';
+						break;
+					default:
+						$mimeType = 'jpeg';
+				}
 		}
 
 		$operations = [];
@@ -121,7 +131,16 @@ class Imaginary extends ProviderV2 {
 			];
 		}
 
+    switch ($mimeType) {
+      case 'jpeg':
 		$quality = $this->config->getAppValue('preview', 'jpeg_quality', '80');
+		break;
+      case 'webp':
+		$quality = $this->config->getAppValue('preview', 'webp_quality', '80');
+		break;
+      default:
+		$quality = $this->config->getAppValue('preview', 'jpeg_quality', '80');
+    }
 
 		$operations[] = [
 			'operation' => ($crop ? 'smartcrop' : 'fit'),
