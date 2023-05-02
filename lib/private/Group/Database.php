@@ -336,10 +336,10 @@ class Database extends ABackend implements
 	 * @return array<int,string> an array of user ids
 	 */
 	public function usersInGroup($gid, $search = '', $limit = -1, $offset = 0): array {
-		return array_values(array_map(fn ($user) => $user->getUid(), $this->searchInGroup($gid, $search, $limit, $offset)));
+		return array_values(array_map(fn ($user): string => $user->getUid(), $this->searchInGroup($gid, $search, $limit, $offset)));
 	}
 
-	public function searchInGroup(string $gid, string $search = '', int $limit = -1, int $offset = 0): array {
+	public function searchInGroup(string $gid, string $search = '', int $limit = -1, int $offset = 0): iterable {
 		$this->fixDI();
 
 		$query = $this->dbConn->getQueryBuilder();
@@ -380,11 +380,9 @@ class Database extends ABackend implements
 		$users = [];
 		$userManager = \OCP\Server::get(IUserManager::class);
 		while ($row = $result->fetch()) {
-			$users[$row['uid']] = new LazyUser($row['uid'], $userManager, $row['displayname'] ?? null);
+			yield $row['uid'] => new LazyUser($row['uid'], $userManager, $row['displayname'] ?? null);
 		}
 		$result->closeCursor();
-
-		return $users;
 	}
 
 	/**
