@@ -24,6 +24,8 @@
  *
  */
 
+import { subscribe, unsubscribe } from '@nextcloud/event-bus'
+
 (function() {
 
 	_.extend(OC.Files.Client, {
@@ -42,10 +44,26 @@
 	 * @namespace
 	 */
 	OCA.Comments.FilesPlugin = {
+		_actionSpec: {
+			name: 'Comment',
+			mime: 'all',
+			className: '.action-comment',
+		},
+
 		ignoreLists: [
 			'trashbin',
 			'files.public',
 		],
+
+		_commentsReadHandler: () => {},
+
+		_handleCommentsRead(context, ressourceId) {
+			if (context.$file.data().id === ressourceId) {
+				const { mime, name, className } = this._actionSpec
+				context.fileList.fileActions.unregisterAction({ context, mime, name, className })
+				unsubscribe('comments:comments:read', this._commentsReadHandler)
+			}
+		},
 
 		_formatCommentCount(count) {
 			return OCA.Comments.Templates.filesplugin({
@@ -90,7 +108,7 @@
 
 			// register "comment" action for reading comments
 			fileList.fileActions.registerAction({
-				name: 'Comment',
+				name: self._actionSpec.name,
 				displayName(context) {
 					if (context && context.$file) {
 						const unread = parseInt(context.$file.data('comments-unread'), 10)
@@ -100,7 +118,7 @@
 					}
 					return t('comments', 'Comment')
 				},
-				mime: 'all',
+				mime: self._actionSpec.mime,
 				order: -140,
 				iconClass: 'icon-comment',
 				permissions: OC.PERMISSION_READ,
@@ -109,6 +127,10 @@
 					const $file = context.$file
 					const unreadComments = $file.data('comments-unread')
 					if (unreadComments) {
+						self._commentsReadHandler = ({ ressourceId }) => self._handleCommentsRead(context, ressourceId)
+						// Remove unread comments icon on read
+						subscribe('comments:comments:read', self._commentsReadHandler)
+
 						const $actionLink = $(self._formatCommentCount(unreadComments))
 						context.$file.find('a.name>span.fileactions').append($actionLink)
 						return $actionLink
@@ -116,7 +138,7 @@
 					return ''
 				},
 				actionHandler(fileName, context) {
-					context.$file.find('.action-comment').tooltip('hide')
+					context.$file.find(self._actionSpec.className).tooltip('hide')
 					// open sidebar in comments section
 					OCA.Files.Sidebar.setActiveTab('comments')
 					OCA.Files.Sidebar.open(context.dir + '/' + fileName)

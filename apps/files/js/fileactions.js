@@ -166,6 +166,24 @@
 			this.icons[name] = action.icon;
 			this._notifyUpdateListeners('registerAction', {action: action});
 		},
+
+		/**
+		 * Unregister action
+		 *
+		 * @param {object} options options object
+		 * @param {OCA.Files.FileActionContext} options.context action context
+		 * @param {string} options.mime mime type
+		 * @param {string} options.name action name
+		 * @param {string} options.className action element class
+		 */
+		unregisterAction: function ({ context, mime, name, className }) {
+			const unregisteredAction = this.actions[mime][name]
+			delete this.actions[mime][name]
+			delete this.icons[name]
+			context.$file.find(className).remove()
+			this._notifyUpdateListeners('unregisterAction', { action: unregisteredAction })
+		},
+
 		/**
 		 * Clears all registered file actions.
 		 */

@@ -68,7 +68,6 @@ export default {
 			type: String,
 			required: false,
 		},
-
 		/**
 		 * Lifecycle methods.
 		 * They are prefixed with `on` to avoid conflict with Vue
