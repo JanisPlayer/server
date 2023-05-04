@@ -84,15 +84,24 @@ class Imaginary extends ProviderV2 {
 		$convert = false;
 		$autorotate = true;
 
+		$preview_format = $this->config->getSystemValueString('preview_format', 'jpeg');
 		switch ($file->getMimeType()) {
 			case 'image/heic':
 				// Autorotate seems to be broken for Heic so disable for that
 				$autorotate = false;
-				$mimeType = 'jpeg';
+				if ($preview_format != 'webp') {
+					$mimeType = 'jpeg';
+				} else {
+					$mimeType = 'webp';
+				}
 				break;
 			case 'image/gif':
 			case 'image/png':
-				$mimeType = 'png';
+				if ($preview_format != 'webp') {
+					$mimeType = 'png';
+				} else {
+					$mimeType = 'webp';
+				}
 				break;
 			case 'image/svg+xml':
 			case 'application/pdf':
@@ -100,10 +109,23 @@ class Imaginary extends ProviderV2 {
 				$convert = true;
 				// Converted files do not need to be autorotated
 				$autorotate = false;
-				$mimeType = 'png';
+				if ($preview_format != 'webp') {
+					$mimeType = 'png';
+				} else {
+					$mimeType = 'webp';
+				}
 				break;
 			default:
-				$mimeType = 'jpeg';
+				switch ($preview_format) {
+					case 'jpeg':
+						$mimeType = 'jpeg';
+						break;
+					case 'webp':
+						$mimeType = 'webp';
+						break;
+					default:
+						$mimeType = 'jpeg';
+				}
 		}
 
 		$operations = [];
@@ -121,7 +143,16 @@ class Imaginary extends ProviderV2 {
 			];
 		}
 
-		$quality = $this->config->getAppValue('preview', 'jpeg_quality', '80');
+		switch ($mimeType) {
+			case 'jpeg':
+				$quality = $this->config->getAppValue('preview', 'jpeg_quality', '80');
+				break;
+			case 'webp':
+				$quality = $this->config->getAppValue('preview', 'webp_quality', '80');
+				break;
+			default:
+				$quality = $this->config->getAppValue('preview', 'jpeg_quality', '80');
+		}
 
 		$operations[] = [
 			'operation' => ($crop ? 'smartcrop' : 'fit'),
@@ -136,15 +167,14 @@ class Imaginary extends ProviderV2 {
 		];
 
 		try {
+			$imaginary_key = $this->config->getSystemValueString('imaginary_key', '');
 			$response = $httpClient->post(
 				$imaginaryUrl . '/pipeline', [
-					'query' => ['operations' => json_encode($operations)],
+					'query' => ['operations' => json_encode($operations), 'key' => $imaginary_key],
 					'stream' => true,
 					'content-type' => $file->getMimeType(),
 					'body' => $stream,
 					'nextcloud' => ['allow_local_address' => true],
-					'timeout' => 120,
-					'connect_timeout' => 3,
 				]);
 		} catch (\Exception $e) {
 			$this->logger->error('Imaginary preview generation failed: ' . $e->getMessage(), [
